@@ -24,3 +24,9 @@ build/
 
 # Editor
 .vscode/
+
+# QueryMind local secrets and generated database
+server/.env
+python_service/venv/
+python_service/__pycache__/
+python_service/data/*.db

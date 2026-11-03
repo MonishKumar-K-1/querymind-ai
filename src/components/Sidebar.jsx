@@ -1,111 +1,33 @@
-
 import {
-  LayoutDashboard,
-  Sparkles,
-  Database,
-  History,
-  Settings,
-  CircleHelp,
-  PanelLeftClose,
-  Command,
+  Activity, AudioLines, Database, History, Settings2, CircleHelp,
+  Command, X, PanelLeftClose, ShieldCheck
 } from "lucide-react";
 
-const navigation = [
-  { name: "Overview", icon: LayoutDashboard },
-  { name: "AI Assistant", icon: Sparkles },
-  { name: "Database Explorer", icon: Database },
-  { name: "Query History", icon: History },
+const items = [
+  { label: "Overview", icon: Activity },
+  { label: "AI Assistant", icon: AudioLines },
+  { label: "Database Explorer", icon: Database },
+  { label: "Query History", icon: History },
 ];
 
-export default function Sidebar({ activePage, setActivePage }) {
+export default function Sidebar({ activePage, onNavigate, mobileOpen, onClose }) {
+  const go = (page) => { onNavigate(page); onClose(); };
   return (
-    <aside className="fixed left-0 top-0 z-30 flex h-screen w-64 flex-col border-r border-slate-800 bg-[#101828] text-white">
-
-      {/* Brand */}
-      <div className="flex h-20 items-center justify-between border-b border-slate-800 px-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600">
-            <Command size={23} />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold tracking-tight">
-              QueryMind<span className="text-blue-400"> AI</span>
-            </h1>
-            <p className="text-[10px] tracking-widest text-slate-400">
-              INTELLIGENT DATA PLATFORM
-            </p>
-          </div>
+    <>
+      {mobileOpen && <button aria-label="Close navigation overlay" onClick={onClose} className="fixed inset-0 z-40 bg-slate-950/50 lg:hidden"/>}
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[272px] flex-col border-r border-white/10 bg-[#111b2e] text-white transition-transform duration-200 lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="flex h-[78px] items-center justify-between border-b border-white/10 px-6">
+          <div className="flex items-center gap-3"><div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-500 shadow-lg shadow-blue-950/40"><Command size={21} strokeWidth={2.4}/></div><div><div className="font-[Manrope] text-[17px] font-extrabold tracking-tight">QueryMind <span className="text-blue-400">AI</span></div><div className="mt-0.5 text-[9px] font-semibold tracking-[.19em] text-slate-400">NATURAL LANGUAGE TO SQL</div></div></div>
+          <button onClick={onClose} className="rounded-lg p-2 text-slate-400 hover:bg-white/10 lg:hidden" aria-label="Close menu"><X size={18}/></button><PanelLeftClose className="hidden text-slate-500 lg:block" size={17}/>
         </div>
-        <PanelLeftClose size={17} className="text-slate-500" />
-      </div>
-
-      {/* Workspace */}
-      <div className="px-5 pt-7">
-        <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">
-          Workspace
-        </p>
-
-        <div className="rounded-lg border border-slate-700 bg-slate-800/70 px-3 py-3">
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-emerald-400" />
-            <span className="text-sm font-medium">My Workspace</span>
-          </div>
-          <p className="mt-1 pl-4 text-xs text-slate-400">
-            Local environment
-          </p>
+        <div className="px-5 pt-7"><p className="mb-3 px-2 text-[10px] font-bold uppercase tracking-[.18em] text-slate-500">Workspace</p><div className="rounded-xl border border-white/10 bg-white/[.045] p-3.5"><div className="flex items-center gap-2.5"><span className="h-2 w-2 rounded-full bg-emerald-400"/><span className="text-[13px] font-semibold text-slate-100">Private workspace</span></div><p className="mt-1.5 pl-[18px] text-[11px] text-slate-400">Administrator access</p></div></div>
+        <nav className="flex-1 px-4 pt-8"><p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[.18em] text-slate-500">Explore</p><div className="space-y-1.5">{items.map(({label,icon:Icon})=>{const active=activePage===label;return <button key={label} onClick={()=>go(label)} className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-left text-[13px] font-medium transition ${active?"bg-blue-500 text-white shadow-lg shadow-blue-950/30":"text-slate-400 hover:bg-white/[.07] hover:text-white"}`}><Icon size={17}/><span>{label}</span>{active&&<span className="ml-auto h-1.5 w-1.5 rounded-full bg-white"/>}</button>;})}</div></nav>
+        <div className="space-y-1 border-t border-white/10 p-4">
+          <button onClick={()=>go("Settings")} className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-[13px] ${activePage==="Settings"?"bg-blue-500 text-white":"text-slate-400 hover:bg-white/[.07] hover:text-white"}`}><Settings2 size={17}/> Settings</button>
+          <button onClick={()=>go("Help & Support")} className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-[13px] ${activePage==="Help & Support"?"bg-blue-500 text-white":"text-slate-400 hover:bg-white/[.07] hover:text-white"}`}><CircleHelp size={17}/> Help & Support</button>
+          <div className="mt-4 flex items-center gap-3 rounded-xl bg-white/[.06] p-3"><div className="grid h-9 w-9 place-items-center rounded-full bg-emerald-500/15 text-emerald-200"><ShieldCheck size={17}/></div><div className="min-w-0"><p className="text-xs font-semibold text-slate-100">Secure session</p><p className="mt-0.5 text-[10px] text-slate-400">Administrator</p></div></div>
         </div>
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 px-4 pt-8">
-        <p className="mb-3 px-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">
-          Menu
-        </p>
-
-        <div className="space-y-1">
-          {navigation.map((item) => {
-            const Icon = item.icon;
-            const active = activePage === item.name;
-
-            return (
-              <button
-                key={item.name}
-                onClick={() => setActivePage(item.name)}
-                className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm transition ${
-                  active
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-950/30"
-                    : "text-slate-400 hover:bg-slate-800 hover:text-white"
-                }`}
-              >
-                <Icon size={18} />
-                {item.name}
-              </button>
-            );
-          })}
-        </div>
-      </nav>
-
-      {/* Bottom navigation */}
-      <div className="space-y-1 border-t border-slate-800 p-4">
-        <button className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm text-slate-400 hover:bg-slate-800 hover:text-white">
-          <Settings size={18} />
-          Settings
-        </button>
-        <button className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm text-slate-400 hover:bg-slate-800 hover:text-white">
-          <CircleHelp size={18} />
-          Help & Support
-        </button>
-
-        <div className="mt-4 flex items-center gap-3 rounded-lg bg-slate-800/70 p-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-500 text-sm font-bold">
-            MK
-          </div>
-          <div>
-            <p className="text-sm font-medium">Workspace User</p>
-            <p className="text-xs text-slate-400">Free workspace</p>
-          </div>
-        </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }

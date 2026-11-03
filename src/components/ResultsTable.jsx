@@ -1,168 +1,57 @@
-
-import { useState } from "react";
-import {
-  Code2,
-  Table2,
-  Copy,
-  Check,
-  Download,
-  Clock3,
-  CheckCircle2,
-} from "lucide-react";
-
-const sampleRows = [
-  { name: "Acme Technologies", region: "South", revenue: "₹8,50,000" },
-  { name: "Global Systems", region: "West", revenue: "₹7,20,000" },
-  { name: "Nexus Solutions", region: "North", revenue: "₹6,80,000" },
-  { name: "Vertex Digital", region: "East", revenue: "₹5,40,000" },
-  { name: "Apex Industries", region: "South", revenue: "₹4,90,000" },
-];
+import { useMemo, useState } from "react";
+import { Check, Clock3, Code2, Copy, Download, FileText, Table2 } from "lucide-react";
 
 export default function ResultsTable({ result }) {
-  const [activeTab, setActiveTab] = useState("results");
+  const [tab, setTab] = useState("results");
   const [copied, setCopied] = useState(false);
+  const columns = result?.columns || [];
+  const rows = result?.rows || [];
+  const sql = result?.sql || "";
 
-  const sql = result?.sql || `SELECT
-    c.name,
-    c.region,
-    SUM(s.amount) AS total_revenue
-FROM CUSTOMER c
-JOIN SALES s
-    ON c.customer_id = s.customer_id
-GROUP BY c.customer_id
-ORDER BY total_revenue DESC
-LIMIT 5;`;
+  const csv = useMemo(() => {
+    if (!columns.length) return "";
+    const escape = (value) => `"${String(value ?? "").replaceAll('"', '""')}"`;
+    return [columns.map(escape).join(","), ...rows.map((row) => columns.map((col) => escape(row[col])).join(","))].join("\n");
+  }, [columns, rows]);
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(sql);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      setCopied(false);
-    }
+  const copySql = async () => {
+    if (!sql) return;
+    try { await navigator.clipboard.writeText(sql); setCopied(true); setTimeout(() => setCopied(false), 1400); } catch { setCopied(false); }
+  };
+  const exportCsv = () => {
+    if (!csv) return;
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+    const link = document.createElement("a"); link.href = url; link.download = "querymind-results.csv"; link.click(); URL.revokeObjectURL(url);
   };
 
   return (
-    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
-        <div>
-          <h3 className="font-semibold text-slate-900">
-            Query Output
-          </h3>
-          <p className="mt-1 text-xs text-slate-400">
-            SQL preview and execution results
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700">
-          <CheckCircle2 size={14} />
-          Demo data
-        </div>
+    <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_10px_rgba(15,23,42,.025)]">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 sm:px-6">
+        <div><h3 className="text-[14px] font-bold text-slate-900">Query workspace</h3><p className="mt-0.5 text-[11px] text-slate-500">Generated SQL and execution output</p></div>
+        {result?.executionTime != null && <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-[10px] font-semibold text-emerald-700"><Clock3 size={12}/>{result.executionTime} ms</span>}
       </div>
-
-      <div className="flex border-b border-slate-200 px-5">
-        <button
-          onClick={() => setActiveTab("results")}
-          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm ${
-            activeTab === "results"
-              ? "border-blue-600 font-semibold text-blue-600"
-              : "border-transparent text-slate-500"
-          }`}
-        >
-          <Table2 size={16} />
-          Results
-        </button>
-
-        <button
-          onClick={() => setActiveTab("sql")}
-          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm ${
-            activeTab === "sql"
-              ? "border-blue-600 font-semibold text-blue-600"
-              : "border-transparent text-slate-500"
-          }`}
-        >
-          <Code2 size={16} />
-          Generated SQL
-        </button>
+      <div className="flex items-center justify-between border-b border-slate-100 px-4 sm:px-6">
+        <div className="flex gap-5">
+          <button onClick={() => setTab("results")} className={`flex items-center gap-2 border-b-2 py-3 text-xs font-semibold ${tab === "results" ? "border-blue-600 text-blue-600" : "border-transparent text-slate-400 hover:text-slate-700"}`}><Table2 size={14}/> Results</button>
+          <button onClick={() => setTab("sql")} className={`flex items-center gap-2 border-b-2 py-3 text-xs font-semibold ${tab === "sql" ? "border-blue-600 text-blue-600" : "border-transparent text-slate-400 hover:text-slate-700"}`}><Code2 size={14}/> Generated SQL</button>
+        </div>
+        {tab === "sql" && sql && <button onClick={copySql} className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500 hover:text-blue-600">{copied ? <Check size={13}/> : <Copy size={13}/>} {copied ? "Copied" : "Copy SQL"}</button>}
+        {tab === "results" && rows.length > 0 && <button onClick={exportCsv} className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500 hover:text-blue-600"><Download size={13}/> Export CSV</button>}
       </div>
-
-      {activeTab === "sql" ? (
-        <div className="bg-[#101828] p-5">
-          <div className="mb-3 flex items-center justify-between">
-            <span className="text-xs text-slate-400">SQLITE / SQL</span>
-            <button
-              onClick={handleCopy}
-              className="flex items-center gap-2 text-xs text-slate-300 hover:text-white"
-            >
-              {copied ? <Check size={14} /> : <Copy size={14} />}
-              {copied ? "Copied" : "Copy SQL"}
-            </button>
-          </div>
-          <pre className="overflow-x-auto whitespace-pre-wrap text-sm leading-7 text-blue-200">
-            {sql}
-          </pre>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-              <tr>
-                <th className="px-5 py-4 font-semibold">Customer</th>
-                <th className="px-5 py-4 font-semibold">Region</th>
-                <th className="px-5 py-4 font-semibold">Revenue</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {sampleRows.map((row) => (
-                <tr key={row.name} className="hover:bg-slate-50">
-                  <td className="px-5 py-4 font-medium text-slate-800">
-                    {row.name}
-                  </td>
-                  <td className="px-5 py-4 text-slate-500">
-                    {row.region}
-                  </td>
-                  <td className="px-5 py-4 font-semibold text-slate-800">
-                    {row.revenue}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 px-5 py-3">
-        <div className="flex items-center gap-4 text-xs text-slate-400">
-          <span>5 demo records</span>
-          <span className="flex items-center gap-1">
-            <Clock3 size={13} /> Demo execution
-          </span>
-        </div>
-        <button
-          onClick={() => {
-            const csv = [
-              "Customer,Region,Revenue",
-              ...sampleRows.map(r =>
-                `"${r.name}","${r.region}","${r.revenue}"`
-              ),
-            ].join("\n");
-
-            const blob = new Blob([csv], { type: "text/csv" });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = "querymind-results.csv";
-            link.click();
-            URL.revokeObjectURL(url);
-          }}
-          className="flex items-center gap-2 text-xs font-medium text-blue-600 hover:text-blue-800"
-        >
-          <Download size={14} />
-          Export CSV
-        </button>
+      {tab === "sql" ? (
+        sql ? <pre className="max-h-[330px] overflow-auto bg-[#111b2e] p-5 text-[12px] leading-6 text-blue-100">{sql}</pre> :
+          <EmptyState icon={Code2} title="No SQL generated yet" message="Your generated SQL will appear here after the backend is connected."/>
+      ) : rows.length > 0 && columns.length > 0 ? (
+        <div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead className="bg-slate-50 text-[10px] uppercase tracking-wider text-slate-500"><tr>{columns.map((col) => <th key={col} className="whitespace-nowrap px-5 py-3.5 font-bold">{col.replaceAll("_", " ")}</th>)}</tr></thead><tbody className="divide-y divide-slate-100">{rows.map((row, i) => <tr key={i} className="hover:bg-slate-50/70">{columns.map((col) => <td key={col} className="whitespace-nowrap px-5 py-3.5 text-slate-700">{String(row[col] ?? "—")}</td>)}</tr>)}</tbody></table></div>
+      ) : <EmptyState icon={FileText} title="Your results will appear here" message="Submit a natural-language question to generate SQL and view live database results."/>}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 px-5 py-3.5 text-[10px] text-slate-400 sm:px-6">
+        <span>{rows.length ? `${rows.length} rows returned` : "Waiting for your first query"}</span>
+        <span className="flex items-center gap-1.5"><Clock3 size={12}/> {result?.executionTime != null ? "Execution completed" : "No execution yet"}</span>
       </div>
     </section>
   );
+}
+
+function EmptyState({ icon: Icon, title, message }) {
+  return <div className="flex min-h-[210px] flex-col items-center justify-center px-5 py-10 text-center"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-slate-100 text-slate-400"><Icon size={20}/></span><h4 className="mt-4 text-[13px] font-bold text-slate-700">{title}</h4><p className="mt-1.5 max-w-sm text-[11px] leading-5 text-slate-400">{message}</p></div>;
 }
